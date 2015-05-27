@@ -158,6 +158,14 @@ for ($i=0; $i < sizeof($contests[0]); $i++){
     print_R($queue);
     print "\n";
 
+    $elook = array();
+    $res = $mysqli->query("select * from entries where contestid=\"$cid\"");
+    for ($row_no = 0; $row_no < $res->num_rows; $row_no++){
+  	 $row = mysqli_fetch_assoc($res);
+	 $elook['p'.$row['postid']] = 1;
+    }
+    print_r($elook);
+
     foreach ($queue as $url => $image){        
 
         #find: INSERT OR UPDATE
@@ -209,7 +217,17 @@ for ($i=0; $i < sizeof($contests[0]); $i++){
  	
 	  printf("Error: %s\n", $mysqli->sqlstate);
           printf("Errormessage: %s\n", $mysqli->error);
-       }	 
+        }
+       
+	if (! array_key_exists('p'.$pid,$elook) ){		
+	if (!	   $mysqli->query("insert into entries (postid, contestid) values (".
+	         "'". $pid . "', ".
+                 "'". $cid . "' ".
+                 ")")){
+		 printf("Error: %s\n", $mysqli->sqlstate);
+		 printf("Errormessage: %s\n", $mysqli->error);
+           }
+	}
 
     }
 }
