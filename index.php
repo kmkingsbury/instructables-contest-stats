@@ -23,7 +23,6 @@ for ($row_no = 0; $row_no < $res->num_rows; $row_no++){
     ?>
     <tr>
     <?php
-#    print_r($row);
     print "<td>" . $row['cid'] . "</td>";
     print "<td><a href=\"detail.php?cid=".$row['cid']."\">" . $row['contestname'] . "</a></td>";
     print "<td>" . $row['contestentries'] . "</td>";
