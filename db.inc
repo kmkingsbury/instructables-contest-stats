@@ -1,4 +1,6 @@
 <?php
+$notify = true;
+$email = "who@example.com";
 
 $dbhost = "localhost"; 
 $dbuser = "user"; 
