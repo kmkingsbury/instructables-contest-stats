@@ -70,10 +70,14 @@ for ($i=0; $i < sizeof($contests[0]); $i++){
        $cid = $contestlookup["'".$contests[2][$i]."'"];
        printf("Found: %d\n", $cid);
     } else {
-       #insert
+       #insert = new Contest
        if (!$mysqli->query("Insert into contests (contestname, contesturl, contestends, creation_time) values ('" . $contests[1][$i]."', '".$contests[2][$i]."', '". $dpat. "', NOW())")){ 
       	  printf("Error: %s\n", $mysqli->sqlstate);
 	  printf("Errormessage: %s\n", $mysqli->error);
+       }
+       
+       if ($notify == true){
+         mail ( $email , "New Contest" , "New Contest: $contests[1][$i], Ends: $dpat");
        }
        printf("Affected rows (UPDATE): %d\n", $mysqli->affected_rows);	   
        $contestlookup[$contests[2][$i]] = $mysqli->insert_id;
