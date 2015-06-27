@@ -77,7 +77,7 @@ for ($i=0; $i < sizeof($contests[0]); $i++){
        }
        
        if ($notify == true){
-         mail ( $email , "New Contest" , "New Contest: $contests[1][$i], Ends: $dpat");
+         mail ( $email , "New Contest" , "New Contest: ".$contests[1][$i].", Ends: $dpat");
        }
        printf("Affected rows (UPDATE): %d\n", $mysqli->affected_rows);	   
        $contestlookup[$contests[2][$i]] = $mysqli->insert_id;
