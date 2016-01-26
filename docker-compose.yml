@@ -1,0 +1,28 @@
+db:
+  image: mysql
+  volumes:
+   - /var/lib/mysql
+   - ./src:/mnt/src/ 
+  environment:
+   MYSQL_ROOT_PASSWORD: 1qaz2wsx3edc4rfv
+   MYSQL_DATABASE: instructables 
+   MYSQL_USER: ics
+   MYSQL_PASSWORD: qwertyuiop
+php:
+  image: nmcteam/php56
+  volumes:
+    - ./src/php-fpm.conf:/etc/php5/fpm/php-fpm.conf
+    - ./src/public:/var/www/public
+  links:
+    - db
+web:
+  image: nginx
+  ports:
+    - "8083:80"
+  volumes:
+    - ./src/public:/var/www/public
+    - ./src/vhost.conf:/etc/nginx/sites-enabled/vhost.conf
+    - ./src/nginx.conf:/etc/nginx/nginx.conf
+  links:
+    - php
+

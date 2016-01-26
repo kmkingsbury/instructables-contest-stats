@@ -1,5 +1,5 @@
 <?php
-require_once('db.inc');
+require_once('includes/db.inc');
 
 # mysql connect
 $mysqli = new mysqli($dbhost, $dbuser, $dbpass, $dbdatabase);
@@ -179,26 +179,31 @@ for ($i=0; $i < sizeof($contests[0]); $i++){
 
 	# set url
 	curl_setopt($ch, CURLOPT_URL, "http://www.instructables.com" . $url);
-	$url = 	$mysqli->real_escape_string($url);
+	
+	print  "URL: $url";
+ 	$url = 	$mysqli->real_escape_string($url);
 	#return the transfer as a string
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
 	# contains the output string
 	$body = curl_exec($ch);
-	
-	preg_match('/<meta itemprop="datePublished" content="(.*?)" \/>/s', $body, $d);
-	$datepub = $mysqli->real_escape_string($d[1]);
 
-	preg_match('/<meta itemprop="interactionCount" content="favorites:(\d+)" \/>/s', $body, $f);
+	preg_match('/<meta itemprop="datePublished" content="(.*?)"\/>/s', $body, $d);
+	$datepub = $mysqli->real_escape_string($d[1]);
+	$datepub = date( "Y-m-d H:i:s", strtotime( $datepub));
+	#echo "DP: $datepub";
+
+	preg_match('/<meta itemprop="interactionCount" content="favorites:(\d+)"\/>/s', $body, $f);
 	$fav = $mysqli->real_escape_string($f[1]);
 
-	preg_match('/<meta itemprop="interactionCount" content="views:(\d+)" \/>/s', $body, $vi);
+	preg_match('/<span class="count view-count">([0-9\,]+)<\/span>/s', $body, $vi);
 	$views = $mysqli->real_escape_string($vi[1]);
+	$views = str_replace(",", "", $views);
 
 	preg_match('/<meta property="og:title"  content="(.*?)"\/>/s', $body, $t);
 	$title = $mysqli->real_escape_string($t[1]);
 
-	preg_match('/<span class="author" itemprop="author">(.*?)<\/span>/s', $body, $a);
+	preg_match('/<a rel="author" .*? itemprop="author">(.*?)<\/a>/s', $body, $a);
 	$author = $mysqli->real_escape_string($a[1]);
 
 	$pid =0;
@@ -210,13 +215,19 @@ for ($i=0; $i < sizeof($contests[0]); $i++){
 		 "'". $image . "', ".
  		 "'". $author . "', ".	
 		 "'". $datepub . "')");
+	 #print "INS: insert into posts (posturl, title, postimage, author, posted) values ('".
+         #        $url . "', ".
+         #        "'". $title . "', ".
+         #        "'". $image . "', ".
+         #        "'". $author . "', ".
+         #        "'". $datepub . "')";
 	 $pid = $mysqli->insert_id;		 
 	 print "New Post: $pid \n"; 
 	} else {
 	 $pid = $row['pid'];
 	 print "Existing Post: $pid\n";
 	}
-	
+	#print "insert into stats (pid, views, favs, creation_time) values ($pid, $views, $fav, NOW())";
 	if (! $mysqli->query("insert into stats (pid, views, favs, creation_time) values ($pid, $views, $fav, NOW())")){
  	
 	  printf("Error: %s\n", $mysqli->sqlstate);

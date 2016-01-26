@@ -1,7 +1,7 @@
 <html>
 <body>
 <?php
-require_once('db.inc');
+require_once('includes/db.inc');
 
 # mysql connect
 $mysqli = new mysqli($dbhost, $dbuser, $dbpass, $dbdatabase);
