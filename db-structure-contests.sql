@@ -20,11 +20,15 @@ COLLATE = utf8_bin;
 CREATE TABLE IF NOT EXISTS posts (
 pid int unsigned NOT NULL AUTO_INCREMENT,
 piid VARCHAR(128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL UNIQUE Key,
-posturl varchar(500),
+url varchar(500),
 title varchar(500),
 author varchar(255),
 postimage varchar(500),
-posted date,
+instructableType varchar(25),
+featured BOOL default false,
+channel varchar(255),
+category varchar(255),
+publishDate date,
 creation_time DATETIME DEFAULT CURRENT_TIMESTAMP,
 modification_time DATETIME ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY (pid)
