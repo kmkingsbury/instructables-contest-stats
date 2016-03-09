@@ -3,8 +3,8 @@ $notify = false;
 $email = "who@example.com";
 $mashable_key = '';
 
-$dbhost = "localhost";
+$dbhost = "db";
 $dbport = 3306;
 $dbuser = "instructables";
-$dbpass = "password";
+$dbpass = "some_pass";
 $dbdatabase = "instructables";
