@@ -1,6 +1,9 @@
 <html>
 <body>
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 require_once('includes/db.inc');
 
 # mysql connect
@@ -35,8 +38,8 @@ if ($o == "t"){
 <?php
 
 
-$query = "select contestid, stats.pid, max(stats.creation_time) as ts, posted, views, favs, title, postimage from stats INNER JOIN entries on stats.pid = entries.postid INNER JOIN posts on entries.postid=posts.pid where contestid='$cid' group by pid $order";
-#print "Query: ". $query;
+$query = "select contestid, stats.pid, max(stats.creation_time) as ts, publishDate, views, favs, title, postimage from stats INNER JOIN entries on stats.pid = entries.postid INNER JOIN posts on entries.postid=posts.pid where contestid='$cid' group by pid $order";
+//print "Query: ". $query;
 $res = $mysqli->query($query);
 for ($row_no = 0; $row_no < $res->num_rows; $row_no++){
     $row = mysqli_fetch_assoc($res);
@@ -47,7 +50,7 @@ for ($row_no = 0; $row_no < $res->num_rows; $row_no++){
        print "<td><a href=\"detail.php?cid=".$row['pid']."\">" . $row['title'] . "</a></td>";
        print "<td align=right>" . $row['views'] . "</td>";
        print "<td align=right>" . $row['favs'] . "</td>";
-       $datetime1 = new DateTime($row['posted']);
+       $datetime1 = new DateTime($row['publishDate']);
        $datenow = new DateTime("now");
        $interval = date_diff($datetime1, $datenow);
        print "<td>".$interval->format('%R%a days') . "</td>";

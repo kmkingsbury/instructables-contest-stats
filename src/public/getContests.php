@@ -9,7 +9,7 @@ require_once('includes/db.inc');
 # mysql connect
 $mysqli = new mysqli($dbhost, $dbuser, $dbpass, $dbdatabase);
 if (mysqli_connect_errno($mysqli)) {
-    echo "Failed to connect to MySQL: " . $mysqli->connect_error();
+echo "Failed to connect to MySQL: " . $mysqli->connect_error();
 }
 
 # https://market.mashape.com/devru/instructables
@@ -19,13 +19,13 @@ if (mysqli_connect_errno($mysqli)) {
 #  -H 'Accept: application/json'
 $ch_api = curl_init();
 curl_setopt($ch_api, CURLOPT_HTTPHEADER, array(
-    'X-Mashape-Key: '.$mashable_key,
-    'Accept: application/json'
-    ));
+'X-Mashape-Key: '.$mashable_key,
+'Accept: application/json'
+));
 
 
 # Loop through the API get x of the recent entries.
-$origlimitperquery = 10000;
+$origlimitperquery = 100;
 $limitperquery = $origlimitperquery; // Don't overload the API
 $iterate = 1; // Limit * iteate = total records
 $offset = 0; // temp variable used in loop.
@@ -33,185 +33,185 @@ $start = 0;
 $apilookup = array();
 
 function createpost($e, $listorentity = 0){
-  global $mysqli;
+global $mysqli;
 
-  # insert new post
-  $featured = 0;
-  if ($mysqli->real_escape_string($e->{'featured'}) == true){
-    $featured = 1;
-  }
+# insert new post
+$featured = 0;
+if ($mysqli->real_escape_string($e->{'featured'}) == true){
+$featured = 1;
+}
 
-  #$r = (1 == $v) ? 'Yes' : 'No';
-  $instructableType = (property_exists($e,'instructableType')) ? $mysqli->real_escape_string($e->{'instructableType'}) : '';
-  $channel = (property_exists($e,'channel')) ?  $mysqli->real_escape_string($e->{'channel'}) : '';
-  $category = (property_exists($e,'category'))? $mysqli->real_escape_string($e->{'category'}) : '';
+#$r = (1 == $v) ? 'Yes' : 'No';
+$instructableType = (property_exists($e,'instructableType')) ? $mysqli->real_escape_string($e->{'instructableType'}) : '';
+$channel = (property_exists($e,'channel')) ?  $mysqli->real_escape_string($e->{'channel'}) : '';
+$category = (property_exists($e,'category'))? $mysqli->real_escape_string($e->{'category'}) : '';
 
 
-  $query = "insert into posts (piid, url, title, author, postimage, instructableType, featured, channel, category, publishDate) values (".
-    "'".$mysqli->real_escape_string($e->{'id'}) . "', ".
-    "'".$mysqli->real_escape_string($e->{'url'}) . "', ".
-    "'". $mysqli->real_escape_string($e->{'title'}) . "', ";
-    if ($listorentity == 0){
-      # from list
-      $query .= "'". $mysqli->real_escape_string($e->{'author'}) . "', ";
-    } else {
-      # from details
-      $query .= "'". $mysqli->real_escape_string($e->{'author'}->{'screenName'}) . "', ";
-    }
-    $query .= "'". $mysqli->real_escape_string($e->{'imageUrl'}) . "', ".
-    "'". $instructableType . "', ".
-    "". $featured . ", ".
-    "'". $channel . "', ".
-    "'". $category . "', ".
-    "'". $mysqli->real_escape_string(date('Y-m-d',strtotime($e->{'publishDate'}))). "')";
-  if (! $mysqli->query($query)){
-    printf("Error: %s\n", $mysqli->sqlstate);
-    printf("Errormessage: %s\n", $mysqli->error);
-  }
+$query = "insert into posts (piid, url, title, author, postimage, instructableType, featured, channel, category, publishDate) values (".
+"'".$mysqli->real_escape_string($e->{'id'}) . "', ".
+"'".$mysqli->real_escape_string($e->{'url'}) . "', ".
+"'". $mysqli->real_escape_string($e->{'title'}) . "', ";
+if ($listorentity == 0){
+# from list
+$query .= "'". $mysqli->real_escape_string($e->{'author'}) . "', ";
+} else {
+# from details
+$query .= "'". $mysqli->real_escape_string($e->{'author'}->{'screenName'}) . "', ";
+}
+$query .= "'". $mysqli->real_escape_string($e->{'imageUrl'}) . "', ".
+"'". $instructableType . "', ".
+"". $featured . ", ".
+"'". $channel . "', ".
+"'". $category . "', ".
+"'". $mysqli->real_escape_string(date('Y-m-d',strtotime($e->{'publishDate'}))). "')";
+if (! $mysqli->query($query)){
+printf("Error: %s\n", $mysqli->sqlstate);
+printf("Errormessage: %s\n", $mysqli->error);
+}
 
-  return $mysqli->insert_id;
+return $mysqli->insert_id;
 
 }
 
 function fetchsinglepostbyidsapi($instructablesid, $pid, $createdbpost){
-  global $ch_api, $mysqli, $last, $apilookup;
-  $url = "https://devru-instructables.p.mashape.com/json-api/showInstructable?id=".$instructablesid;
-  if ($debug == 1){  print "URL: " . $url;}
+global $ch_api, $mysqli, $last, $apilookup;
+$url = "https://devru-instructables.p.mashape.com/json-api/showInstructable?id=".$instructablesid;
+if ($debug == 1){  print "URL: " . $url;}
 
-  # Set url
-  curl_setopt($ch_api, CURLOPT_URL, $url);
+# Set url
+curl_setopt($ch_api, CURLOPT_URL, $url);
 
-  # Return the transfer as a string
-  curl_setopt($ch_api, CURLOPT_RETURNTRANSFER, 1);
-  curl_setopt($ch_api, CURLOPT_CONNECTTIMEOUT, 10);
+# Return the transfer as a string
+curl_setopt($ch_api, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch_api, CURLOPT_CONNECTTIMEOUT, 10);
 
-  #contains the output string
-  $output = curl_exec($ch_api);
-  $json_api = json_decode($output, false);
-  $e = $json_api;
-  print "json_api for $url:\n";
-  if (!is_object($e)) {
-    //error array
-    print "Err!";
-    exit();
-  }
-  #var_dump($json_api);
-  #exit;
-  $apilookup[$e->{'url'}] = $e;
-  if ($createdbpost == true){
-    $pid = createpost($e,1);
-    $apilookup[$e->{'url'}]->{'pid'} = $pid;
-  }
+#contains the output string
+$output = curl_exec($ch_api);
+$json_api = json_decode($output, false);
+$e = $json_api;
+print "json_api for $url:\n";
+if (!is_object($e)) {
+//error array
+print "Err!";
+exit();
+}
+#var_dump($json_api);
+#exit;
+$apilookup[$e->{'url'}] = $e;
+if ($createdbpost == true){
+$pid = createpost($e,1);
+$apilookup[$e->{'url'}]->{'pid'} = $pid;
+}
 
-  $views = $mysqli->real_escape_string($e->{'views'});
-  $favs = (property_exists($e, 'favorites'))? $mysqli->real_escape_string($e->{'favorites'}) : 0;
+$views = $mysqli->real_escape_string($e->{'views'});
+$favs = (property_exists($e, 'favorites'))? $mysqli->real_escape_string($e->{'favorites'}) : 0;
 
-  $e->{'urlString'} = htmlentities($e->{'urlString'}, ENT_QUOTES, "UTF-8");;
-  #add it to our array, so don't refetch
-  $apilookup["/id/". $e->{'urlString'} ."/"] = $e;
-  $apilookup["/id/". $e->{'urlString'} ."/"]->{'pid'} = $pid;
-  print "Adding URL:". "/id/". $e->{'urlString'} ."/ -> $pid \n";
+$e->{'urlString'} = htmlentities($e->{'urlString'}, ENT_QUOTES, "UTF-8");;
+#add it to our array, so don't refetch
+$apilookup["/id/". $e->{'urlString'} ."/"] = $e;
+$apilookup["/id/". $e->{'urlString'} ."/"]->{'pid'} = $pid;
+print "Adding URL:". "/id/". $e->{'urlString'} ."/ -> $pid \n";
 
 
-  # Exists and new, update stats.
-  # print "insert into stats (pid, views, favs, creation_time) values ($pid, $views, $fav, NOW())";
-  if (! $mysqli->query("insert into stats (pid, views, favs, creation_time) values (" .$pid.", '".$views ."', '".$favs."', NOW())")){
-    printf("Error: %s\n", $mysqli->sqlstate);
-    printf("Errormessage: %s\n", $mysqli->error);
-  }
+# Exists and new, update stats.
+# print "insert into stats (pid, views, favs, creation_time) values ($pid, $views, $fav, NOW())";
+if (! $mysqli->query("insert into stats (pid, views, favs, creation_time) values (" .$pid.", '".$views ."', '".$favs."', NOW())")){
+printf("Error: %s\n", $mysqli->sqlstate);
+printf("Errormessage: %s\n", $mysqli->error);
+}
 
-  return "/id/". $e->{'urlString'} ."/";
+return "/id/". $e->{'urlString'} ."/";
 }
 # this is a function, used at end for not found entries;
 function fetchpostsapi($start, $limitperquery, $offset, $iterate){
 # Loop
-  global $ch_api, $mysqli, $last, $apilookup, $debug;
+global $ch_api, $mysqli, $last, $apilookup, $debug;
 
 
-  for ($i =$start; $i<$iterate; $i++){
+for ($i =$start; $i<$iterate; $i++){
 
 
 
-    $url = "https://devru-instructables.p.mashape.com/list?limit=".$limitperquery."&offset=". $offset."&sort=recent";
-    $offset += $limitperquery;
-    if ($debug == 1){  print "URL: " . $url;}
+$url = "https://devru-instructables.p.mashape.com/list?limit=".$limitperquery."&offset=". $offset."&sort=recent";
+$offset += $limitperquery;
+if ($debug == 1){  print "URL: " . $url;}
 
-    # Set url
-    curl_setopt($ch_api, CURLOPT_URL, $url);
+# Set url
+curl_setopt($ch_api, CURLOPT_URL, $url);
 
-    # Return the transfer as a string
-    curl_setopt($ch_api, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch_api, CURLOPT_CONNECTTIMEOUT, 10);
+# Return the transfer as a string
+curl_setopt($ch_api, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch_api, CURLOPT_CONNECTTIMEOUT, 10);
 
-    #contains the output string
-    $output = curl_exec($ch_api);
-    $json_api = json_decode($output, false);
+#contains the output string
+$output = curl_exec($ch_api);
+$json_api = json_decode($output, false);
 
-    $last = "";
-    $pid = 0;
-    #var_dump($json_api);
-    #print sizeof($json_api->{'items'}) . "\n";
-    for ($j = 0; $j < sizeof($json_api->{'items'}); $j++){
-      $e = $json_api->{'items'}[$j];
-      if ($debug == 1){ print "ID: " . $e->{'url'} . "\n";}
-      $apilookup[$e->{'url'}] = $e;
+$last = "";
+$pid = 0;
+#var_dump($json_api);
+#print sizeof($json_api->{'items'}) . "\n";
+for ($j = 0; $j < sizeof($json_api->{'items'}); $j++){
+$e = $json_api->{'items'}[$j];
+if ($debug == 1){ print "ID: " . $e->{'url'} . "\n";}
+$apilookup[$e->{'url'}] = $e;
 
-      #id, url, title, author, publishDate, imageUrl
-      $last = $e->{'url'};
-      $views = $mysqli->real_escape_string($e->{'views'});
-      $favs = (property_exists($e, 'favorites'))? $mysqli->real_escape_string($e->{'favorites'}) : 0;
-      $pid = -1;
-      $res = $mysqli->query("select * from posts where url='".$mysqli->real_escape_string($e->{'url'})."' limit 1");
-      $row = mysqli_fetch_assoc($res);
-      if ($res->num_rows == 0){
-        $pid = createpost($e);
-        print "New Post: $pid \n";
-      } else {
-        $pid = $row['pid'];
-        print "Existing: $pid \n";
-      }
-      $apilookup[$e->{'url'}]->{'pid'} = $pid;
-      # Exists and new, update stats.
-      # print "insert into stats (pid, views, favs, creation_time) values ($pid, $views, $fav, NOW())";
-      if (! $mysqli->query("insert into stats (pid, views, favs, creation_time) values (" .$pid.", '".$views ."', '".$favs."', NOW())")){
-        printf("Error: %s\n", $mysqli->sqlstate);
-        printf("Errormessage: %s\n", $mysqli->error);
-      }
+#id, url, title, author, publishDate, imageUrl
+$last = $e->{'url'};
+$views = $mysqli->real_escape_string($e->{'views'});
+$favs = (property_exists($e, 'favorites'))? $mysqli->real_escape_string($e->{'favorites'}) : 0;
+$pid = -1;
+$res = $mysqli->query("select * from posts where url='".$mysqli->real_escape_string($e->{'url'})."' limit 1");
+$row = mysqli_fetch_assoc($res);
+if ($res->num_rows == 0){
+$pid = createpost($e);
+print "New Post: $pid \n";
+} else {
+$pid = $row['pid'];
+print "Existing: $pid \n";
+}
+$apilookup[$e->{'url'}]->{'pid'} = $pid;
+# Exists and new, update stats.
+# print "insert into stats (pid, views, favs, creation_time) values ($pid, $views, $fav, NOW())";
+if (! $mysqli->query("insert into stats (pid, views, favs, creation_time) values (" .$pid.", '".$views ."', '".$favs."', NOW())")){
+printf("Error: %s\n", $mysqli->sqlstate);
+printf("Errormessage: %s\n", $mysqli->error);
+}
 
-    } // end for $j
-    print "Size: " . sizeof($json_api->{'items'}) . "\n";
-  } // end for start offset loop
-  return $last;
+} // end for $j
+print "Size: " . sizeof($json_api->{'items'}) . "\n";
+} // end for start offset loop
+return $last;
 }
 
 function fetchrawhtmlpost($url){
-  global $ch, $mysqli;
+global $ch, $mysqli;
 
-  # set url
-  curl_setopt($ch, CURLOPT_URL, "http://www.instructables.com" . $url);
+# set url
+curl_setopt($ch, CURLOPT_URL, "http://www.instructables.com" . $url);
 
-  #return the transfer as a string
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+#return the transfer as a string
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
-  # contains the output string
-  $body = curl_exec($ch);
-  preg_match('/LogHit\(\'([A-Z0-9]+)\',\'[A-Z0-9]\',\'[A-Z0-9]+\'\);/s', $body, $m);
-  $piid = $m[1];
+# contains the output string
+$body = curl_exec($ch);
+preg_match('/LogHit\(\'([A-Z0-9]+)\',\'[A-Z0-9]\',\'[A-Z0-9]+\'\);/s', $body, $m);
+$piid = $m[1];
 
-  # query db first
-  $res = $mysqli->query("select * from posts where piid='".$mysqli->real_escape_string($piid)."' limit 1");
-  $row = mysqli_fetch_assoc($res);
-  if ($res->num_rows == 0){
-    return fetchsinglepostbyidsapi($piid, -1, true);
-  } else {
-    $pid = $row['pid'];
-    $apilookup["/id/". $row['url'] ."/"] = new stdClass();
-    $apilookup["/id/". $row['url'] ."/"]->{'pid'} = $pid;
-    print "Existing: $pid \n";
-    return $apilookup["/id/". $row['url'] ."/"];
-  }
+# query db first
+$res = $mysqli->query("select * from posts where piid='".$mysqli->real_escape_string($piid)."' limit 1");
+$row = mysqli_fetch_assoc($res);
+if ($res->num_rows == 0){
+return fetchsinglepostbyidsapi($piid, -1, true);
+} else {
+$pid = $row['pid'];
+$apilookup["/id/". $row['url'] ."/"] = new stdClass();
+$apilookup["/id/". $row['url'] ."/"]->{'pid'} = $pid;
+print "Existing: $pid \n";
+return $apilookup["/id/". $row['url'] ."/"];
+}
 
-  //return fetchsinglepostbyidsapi($piid, -1, true);
+//return fetchsinglepostbyidsapi($piid, -1, true);
 }
 
 
@@ -387,6 +387,7 @@ for ($i=0; $i < sizeof($contests[0]); $i++){
   	  $row = mysqli_fetch_assoc($res);
 	    $elook['p'.$row['postid']] = 1;
     }
+    print "Elook:\n";
     print_r($elook);
 
 
@@ -426,8 +427,16 @@ for ($i=0; $i < sizeof($contests[0]); $i++){
 	        }
         }
 
+	print "PID: $pid and Array:" .array_key_exists('p'.$pid,$elook) ."\n";
         # if in the elook then it is a contest entry, if not there add it
 	      if ($pid != -1 && ! array_key_exists('p'.$pid,$elook) ){
+		//not in api, maybe in posts, if so add to statsqueue:
+          	$res = $mysqli->query("select url,piid,pid from posts where url='".$mysqli->real_escape_string($url)."' limit 1");
+                $row = mysqli_fetch_assoc($res);
+                if ($res->num_rows > 0){
+                  $pid = $row['pid'];
+                  print "Existing Post: $pid\n";
+		}
 	        if (!	   $mysqli->query("insert into entries (postid, contestid) values (".
 	          "'". $pid . "', ".
             "'". $cid . "' ".
