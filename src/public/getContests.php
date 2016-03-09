@@ -41,6 +41,12 @@ function createpost($e, $listorentity = 0){
     $featured = 1;
   }
 
+  #$r = (1 == $v) ? 'Yes' : 'No';
+  $instructableType = (property_exists($e,'instructableType')) ? $mysqli->real_escape_string($e->{'instructableType'}) : '';
+  $channel = (property_exists($e,'channel')) ?  $mysqli->real_escape_string($e->{'channel'}) : '';
+  $category = (property_exists($e,'category'))? $mysqli->real_escape_string($e->{'category'}) : '';
+
+
   $query = "insert into posts (piid, url, title, author, postimage, instructableType, featured, channel, category, publishDate) values (".
     "'".$mysqli->real_escape_string($e->{'id'}) . "', ".
     "'".$mysqli->real_escape_string($e->{'url'}) . "', ".
@@ -53,10 +59,10 @@ function createpost($e, $listorentity = 0){
       $query .= "'". $mysqli->real_escape_string($e->{'author'}->{'screenName'}) . "', ";
     }
     $query .= "'". $mysqli->real_escape_string($e->{'imageUrl'}) . "', ".
-    "'". $mysqli->real_escape_string($e->{'instructableType'}) . "', ".
+    "'". $instructableType . "', ".
     "". $featured . ", ".
-    "'". $mysqli->real_escape_string($e->{'channel'}) . "', ".
-    "'". $mysqli->real_escape_string($e->{'category'}) . "', ".
+    "'". $channel . "', ".
+    "'". $category . "', ".
     "'". $mysqli->real_escape_string(date('Y-m-d',strtotime($e->{'publishDate'}))). "')";
   if (! $mysqli->query($query)){
     printf("Error: %s\n", $mysqli->sqlstate);
@@ -98,7 +104,8 @@ function fetchsinglepostbyidsapi($instructablesid, $pid, $createdbpost){
   }
 
   $views = $mysqli->real_escape_string($e->{'views'});
-  $favs =  $mysqli->real_escape_string($e->{'favorites'});
+  $favs = (property_exists($e, 'favorites'))? $mysqli->real_escape_string($e->{'favorites'}) : 0;
+
   $e->{'urlString'} = htmlentities($e->{'urlString'}, ENT_QUOTES, "UTF-8");;
   #add it to our array, so don't refetch
   $apilookup["/id/". $e->{'urlString'} ."/"] = $e;
@@ -152,10 +159,7 @@ function fetchpostsapi($start, $limitperquery, $offset, $iterate){
       #id, url, title, author, publishDate, imageUrl
       $last = $e->{'url'};
       $views = $mysqli->real_escape_string($e->{'views'});
-      $favs =  $mysqli->real_escape_string($e->{'favorites'});
-      if ($favs == ''){
-        $favs = 0;
-      }
+      $favs = (property_exists($e, 'favorites'))? $mysqli->real_escape_string($e->{'favorites'}) : 0;
       $pid = -1;
       $res = $mysqli->query("select * from posts where url='".$mysqli->real_escape_string($e->{'url'})."' limit 1");
       $row = mysqli_fetch_assoc($res);
@@ -201,10 +205,10 @@ function fetchrawhtmlpost($url){
     return fetchsinglepostbyidsapi($piid, -1, true);
   } else {
     $pid = $row['pid'];
-    $apilookup["/id/". $e->{'urlString'} ."/"] = new stdClass();
-    $apilookup["/id/". $e->{'urlString'} ."/"]->{'pid'} = $pid;
+    $apilookup["/id/". $row['url'] ."/"] = new stdClass();
+    $apilookup["/id/". $row['url'] ."/"]->{'pid'} = $pid;
     print "Existing: $pid \n";
-    return $apilookup["/id/". $e->{'urlString'} ."/"];
+    return $apilookup["/id/". $row['url'] ."/"];
   }
 
   //return fetchsinglepostbyidsapi($piid, -1, true);
@@ -441,15 +445,17 @@ for ($i=0; $i < sizeof($contests[0]); $i++){
     # Go through the not found entries queue, but change api limits;
 
     $newlimitperquery = 1000;
-    $iterate = floor($origlimitperquery/$newlimitperquery);
-    $limitperquery = $newlimitperquery;
+    if ($limitperquery != $newlimitperquery){
+      $iterate = floor($origlimitperquery/$newlimitperquery);
+      $limitperquery = $newlimitperquery;
+      $start = $iteratei - 1; //minus due to the ++Start;
+    }
 
     $loopcount = 0;
     $loopmax = 1;
     while (sizeof($unknownpostqueue) > 0 && $loopcount < $loopmax){
       # fetch next offset block
-      $start = $iterate;
-
+      ++$start;
       $iterate = $start+1;
       print "Searching: Queuesize: ".sizeof($unknownpostqueue). " start:". $start. " iterate:". $iterate . " offset: ".$offset . " limit: ". $limitperquery."\n";
       var_dump($unknownpostqueue);
