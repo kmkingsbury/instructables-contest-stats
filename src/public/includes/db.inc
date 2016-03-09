@@ -1,7 +1,7 @@
 <?php
 $notify = false;
 $email = "who@example.com";
-$mashable_key = ''
+$mashable_key = '';
 
 $dbhost = "localhost";
 $dbport = 3306;
