@@ -6,8 +6,8 @@ db:
   environment:
    MYSQL_ROOT_PASSWORD: 1qaz2wsx3edc4rfv
    MYSQL_DATABASE: instructables 
-   MYSQL_USER: ics
-   MYSQL_PASSWORD: qwertyuiop
+   MYSQL_USER: instructables
+   MYSQL_PASSWORD: some_pass
 php:
   image: nmcteam/php56
   volumes:
