@@ -118,7 +118,7 @@ function fetchsinglepostbyidsapi($instructablesid, $pid, $createdbpost){
 # this is a function, used at end for not found entries;
 function fetchpostsapi($start, $limitperquery, $offset, $iterate){
 # Loop
-  global $ch_api, $mysqli, $last, $apilookup;
+  global $ch_api, $mysqli, $last, $apilookup, $debug;
 
 
   for ($i =$start; $i<$iterate; $i++){

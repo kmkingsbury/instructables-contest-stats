@@ -12,6 +12,7 @@ php:
   image: nmcteam/php56
   volumes:
     - ./src/php-fpm.conf:/etc/php5/fpm/php-fpm.conf
+    - ./src/php.ini:/etc/php5/fpm/php.ini
     - ./src/public:/var/www/public
   links:
     - db
