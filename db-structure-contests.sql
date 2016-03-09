@@ -6,7 +6,7 @@ GRANT ALL PRIVILEGES ON instructables.* TO 'instructables'@'localhost' WITH GRAN
 CREATE TABLE IF NOT EXISTS contests (
 cid int unsigned NOT NULL AUTO_INCREMENT,
 contestname VARCHAR(500),
-contesturl VARCHAR(500),
+contesturl VARCHAR(500) CHARACTER SET utf8 COLLATE utf8_bin not null UNIQUE Key,
 contestends date,
 contestentries int unsigned default 0,
 creation_time DATETIME DEFAULT CURRENT_TIMESTAMP,
