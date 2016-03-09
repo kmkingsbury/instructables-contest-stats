@@ -1,5 +1,7 @@
 
 create database if not exists instructables;
+CREATE USER 'instructables'@'localhost' IDENTIFIED BY 'some_pass';
+GRANT ALL PRIVILEGES ON instructables.* TO 'instructables'@'localhost' WITH GRANT OPTION;
 
 CREATE TABLE IF NOT EXISTS contests (
 cid int unsigned NOT NULL AUTO_INCREMENT,
@@ -17,11 +19,16 @@ COLLATE = utf8_bin;
 
 CREATE TABLE IF NOT EXISTS posts (
 pid int unsigned NOT NULL AUTO_INCREMENT,
-posturl varchar(500),
+piid VARCHAR(128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL UNIQUE Key,
+url varchar(500),
 title varchar(500),
-author varchar(255), 
+author varchar(255),
 postimage varchar(500),
-posted date,
+instructableType varchar(25),
+featured BOOL default false,
+channel varchar(255),
+category varchar(255),
+publishDate date,
 creation_time DATETIME DEFAULT CURRENT_TIMESTAMP,
 modification_time DATETIME ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY (pid)
@@ -32,7 +39,7 @@ COLLATE = utf8_bin;
 
 CREATE TABLE IF NOT EXISTS stats (
 sid int unsigned NOT NULL AUTO_INCREMENT,
-pid int	unsigned NOT NULL,
+pid int unsigned NOT NULL,
 views int unsigned default 0,
 favs  int unsigned default 0,
 creation_time DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -54,4 +61,3 @@ PRIMARY KEY (eid)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8
 COLLATE = utf8_bin;
-

@@ -1,9 +1,10 @@
 <?php
-$notify = true;
+$notify = false;
 $email = "who@example.com";
+$mashable_key = ''
 
-$dbhost = "localhost"; 
-$dbuser = "user"; 
+$dbhost = "localhost";
+$dbport = 3306;
+$dbuser = "instructables";
 $dbpass = "password";
 $dbdatabase = "instructables";
-
