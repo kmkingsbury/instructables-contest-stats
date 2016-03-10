@@ -58,6 +58,8 @@ for ($row_no = 0; $row_no < $res->num_rows; $row_no++){
     </tr>
     <?php
    }
-?>
+   ?><tr><td colspan=3>&nbsp;</td><td><?php echo  $res->num_rows . " entries"; ?></td></tr>
+
+
 </table>
 </body>
