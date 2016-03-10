@@ -216,6 +216,8 @@ return $apilookup["/id/". $row['url'] ."/"];
 
 
 $last = fetchpostsapi($start, $limitperquery, $offset, $iterate);
+$offset += ($limitperquery*($iterate- $start));
+
 print "Last:\n";
 var_dump($apilookup[$last]);
 
@@ -432,15 +434,15 @@ for ($i=0; $i < sizeof($contests[0]); $i++){
 	      if ($pid != -1 && ! array_key_exists('p'.$pid,$elook) ){
 		//not in api, maybe in posts, if so add to statsqueue:
           	$res = $mysqli->query("select url,piid,pid from posts where url='".$mysqli->real_escape_string($url)."' limit 1");
-                $row = mysqli_fetch_assoc($res);
-                if ($res->num_rows > 0){
-                  $pid = $row['pid'];
-                  print "Existing Post: $pid\n";
-		}
-	        if (!	   $mysqli->query("insert into entries (postid, contestid) values (".
-	          "'". $pid . "', ".
-            "'". $cid . "' ".
-            ")")){
+            $row = mysqli_fetch_assoc($res);
+            if ($res->num_rows > 0){
+                $pid = $row['pid'];
+                print "Existing Post: $pid\n";
+		        }
+	          if (!	   $mysqli->query("insert into entries (postid, contestid) values (".
+	           "'". $pid . "', ".
+             "'". $cid . "' ".
+             ")")){
 		          printf("Error: %s\n", $mysqli->sqlstate);
 		          printf("Errormessage: %s\n", $mysqli->error);
             }
@@ -453,15 +455,16 @@ for ($i=0; $i < sizeof($contests[0]); $i++){
 
     # Go through the not found entries queue, but change api limits;
 
-    $newlimitperquery = 1000;
+    $newlimitperquery = 10;
     if ($limitperquery != $newlimitperquery){
       $iterate = floor($origlimitperquery/$newlimitperquery);
       $limitperquery = $newlimitperquery;
-      $start = $iteratei - 1; //minus due to the ++Start;
+      $start = $iterate - 1; //minus due to the ++Start;
+      $offset = $origlimitperquery;
     }
 
     $loopcount = 0;
-    $loopmax = 1;
+    $loopmax = 10;
     while (sizeof($unknownpostqueue) > 0 && $loopcount < $loopmax){
       # fetch next offset block
       ++$start;
@@ -471,6 +474,7 @@ for ($i=0; $i < sizeof($contests[0]); $i++){
       # this is a function, used at end for not found entries;
 
       $last = fetchpostsapi($start, $limitperquery, $offset, $iterate);
+      $offset += ($limitperquery*($iterate- $start));
 
       # look for our entries
       $index = -1;
@@ -478,15 +482,18 @@ for ($i=0; $i < sizeof($contests[0]); $i++){
         ++$index;
 
         if ($debug == 1){ print "URL: ".$url."\n" ;}
-  	    $res = $mysqli->query("select * from posts where url='".$mysqli->real_escape_string($url)."' limit 1");
+  	    $res = $mysqli->query("select pid from posts where url='".$mysqli->real_escape_string($url)."' limit 1");
         $row = mysqli_fetch_assoc($res);
 
         if ($res->num_rows > 0){
   	      //found
   	      print "found splice out\n";
           array_splice($unknownpostqueue, $index, 1);
+
           # if in the elook then it is a contest entry, if not there add it
-  	      if (array_key_exists('p'.$row['pid'],$elook) ){
+          if (! array_key_exists('p'.$row['pid'],$elook) ){
+
+
   	        if (!	   $mysqli->query("insert into entries (postid, contestid) values (".
   	          "'". $pid . "', ".
               "'". $cid . "' ".
@@ -517,7 +524,7 @@ for ($i=0; $i < sizeof($contests[0]); $i++){
 
       }
     }
-    
+
     # Go through the stats queue:
     while (sizeof($statsqueue) > 0){
       $url ="";
