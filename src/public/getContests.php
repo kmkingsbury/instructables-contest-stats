@@ -274,8 +274,9 @@ $block = $matches[1];
 #print_r($matches[1]);
 
 #Get All:
-$contestblock = '/<div class="contest-preview"><a.*?title="(.*?)".*?href="(.*?)".*?<h1>(.*?)<\/h1>.*?(?:<\/div>){4}/s';
+$contestblock = '/<div class="contest-preview"><a.*?title="(.*?)".*?href="(.*?)".*?<img.*?src="(.*?)".*?<h1>(.*?)<\/h1>.*?(?:<\/div>){4}/s';
 preg_match_all($contestblock, $block, $contests);
+
 #print_R($contests);
 
 $contestlookup = array();
@@ -291,13 +292,14 @@ for ($i=0; $i < sizeof($contests[0]); $i++){
 #For Each:
 $contests[1][$i] = $mysqli->real_escape_string($contests[1][$i]);
 $contests[2][$i] = $mysqli->real_escape_string($contests[2][$i]);
+$contests[3][$i] = $mysqli->real_escape_string($contests[3][$i]);
 
 #Iterate
-# 1 = title 2 = url 3= date
-print $contests[1][$i] ." - " . $contests[2][$i] . " = ". $contests[3][$i] . "\n";
+# 1 = title 2 = url 3=imgurl 4= date
+print $contests[1][$i] ." - " . $contests[2][$i] . " = ". $contests[4][$i] . "\n";
 
 $datepattern = '/(\w+ \d{1,2}, \d{4})/';
-preg_match($datepattern, $contests[3][$i], $m);
+preg_match($datepattern, $contests[4][$i], $m);
 $dpat= date('Y-m-d',strtotime($m[1]));
 $dpat = $mysqli->real_escape_string($dpat);
 $cid = 0;
@@ -306,7 +308,7 @@ $cid = $contestlookup["'".$contests[2][$i]."'"];
 printf("Found: %d\n", $cid);
 } else {
 #insert = new Contest
-if (!$mysqli->query("Insert into contests (contestname, contesturl, contestends, creation_time) values ('" . $contests[1][$i]."', '".$contests[2][$i]."', '". $dpat. "', NOW())")){
+if (!$mysqli->query("Insert into contests (contestname, contesturl, contestimg, contestends, creation_time) values ('" . $contests[1][$i]."', '".$contests[2][$i]."','" . $contests[3][$i]."', '". $dpat. "', NOW())")){
 printf("Error: %s\n", $mysqli->sqlstate);
 printf("Errormessage: %s\n", $mysqli->error);
 }
@@ -319,7 +321,7 @@ print_r($counts['contests']);
 
 #webhook here:
 if ($useSlack == 1){
-$payload_arr = array("channel"=> "$channel", "username"=> "$botname", "text"=> "<!everyone>: New Instructable Contest: $contests[1][$i] <$contests[2][$i]|$contests[2][$i]> for details.");
+$payload_arr = array("channel"=> "$channel", "username"=> "$botname", "text"=> "<!everyone>: New Instructable Contest: ".$contests[1][$i]." <http://www.instructables.com".$contests[2][$i]."|".$contests[2][$i]."> for details.");
 $payload = json_encode($payload_arr);
 
 # Create curl resource
@@ -623,7 +625,8 @@ array_splice($statsqueue, $index, 1);
 curl_close($ch);
 
 if ($useSlack == 1){
-$payload_arr=array("channel"=> "$channel", "username"=> "$botname", "text"=> "Instructables Stats run complete: Results: \nNew Entries: ". $counts['new'] ."\nExisting Entries: ". $counts['existing']."\nStats updated: ".$counts['updated']."\nRequests via API: ".$counts['api']."\nRequests via HTML: ".$counts['html']."\nNew Contests:\n".json_encode(print_R($counts['newcontests'], true)));
+$payload_arr=array("channel"=> "$channel", "username"=> "$botname", "text"=> "Instructables Stats run complete: Results: \nNew Entries: ". $counts['new'] ."\nExisting Entries: ". $counts['existing']."\nStats updated: ".$counts['updated']."\nRequests via API: ".$counts['api']."\nRequests via HTML: ".$counts['html']."\n");
+#New Contests:\n".json_encode(print_R($counts['newcontests'], true)));
 $payload = json_encode($payload_arr);
 
 # Create curl resource
